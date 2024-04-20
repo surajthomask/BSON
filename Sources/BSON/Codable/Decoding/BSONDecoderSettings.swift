@@ -12,6 +12,7 @@ public struct BSONDecoderSettings {
             filterDollarPrefix: false,
             stringDecodingStrategy: .string,
             decodeObjectIdFromString: false,
+            timestampToDateDecodingStrategy: .never,
             floatDecodingStrategy: .double,
             doubleDecodingStrategy: .double,
             int8DecodingStrategy: .anyInteger,
@@ -34,6 +35,7 @@ public struct BSONDecoderSettings {
             filterDollarPrefix: false,
             stringDecodingStrategy: .adaptive,
             decodeObjectIdFromString: true,
+            timestampToDateDecodingStrategy: .relativeToReferenceDate,
             floatDecodingStrategy: .adaptive,
             doubleDecodingStrategy: .adaptive,
             int8DecodingStrategy: .adaptive,
@@ -147,7 +149,17 @@ public struct BSONDecoderSettings {
         /// This may be used for applying fallback values or other custom behaviour
         case custom(DecodingStrategy<String>)
     }
-    
+
+    public enum TimestampToDateDecodingStrategy {
+
+        /// Do not convert, and throw an error
+        case never
+        /// Convert the timestamp relative to the  unix epoch
+        case relativeToUnixEpoch
+        /// Convert the timestamp relative to the reference date, 1st of January 2000.
+        case relativeToReferenceDate
+    }
+
     /// If `true`, BSON Null values will be regarded as `nil`
     public var decodeNullAsNil: Bool = true
     public var filterDollarPrefix = false
@@ -158,9 +170,9 @@ public struct BSONDecoderSettings {
     /// If `true`, allows decoding ObjectIds from Strings if they're formatted as a 24-character hexString
     public var decodeObjectIdFromString: Bool = false
     
-    /// If `true`, allows decoding Date from a Double (TimeInterval)
-    public var decodeDateFromTimestamp: Bool = true
-    
+    /// A strategy to apply when converting time interval to date objects
+    public var timestampToDateDecodingStrategy: TimestampToDateDecodingStrategy = .relativeToReferenceDate
+
     /// A strategy that is applied when encountering a request to decode a `Float`
     public var floatDecodingStrategy: FloatDecodingStrategy
     
@@ -196,4 +208,11 @@ public struct BSONDecoderSettings {
     
     /// A strategy that is applied when encountering a request to decode a `UInt`
     public var uintDecodingStrategy: IntegerDecodingStrategy<UInt>
+
+    public func with(timestampToDateDecodingStrategy: TimestampToDateDecodingStrategy) -> Self {
+
+        var settings = self
+        settings.timestampToDateDecodingStrategy = timestampToDateDecodingStrategy
+        return settings
+    }
 }
